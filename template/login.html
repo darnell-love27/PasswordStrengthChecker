@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Page</title>
+</head>
+<body bgcolor="cyan">
+    <h2>Login</h2>
+    <form id="loginForm">
+        Username:<br>
+        <input type="text" id="username" name="username"><br>
+        Password:<br>
+        <input type="password" id="password" name="password" oninput="checkPasswordStrength()"><br>
+        <p id="passwordRequirements">Password requirements: Minimum 11 characters, at least one uppercase, one lowercase, and one special character.</p>
+        <input type="button" value="Login" onclick="sendPassword()">
+    </form>
+    <p id="passwordStrength"></p>
+    <p id="loginStatus"></p>
+
+    <script>
+        function sendPassword() {
+            var password = document.getElementById("password").value;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/evaluate_password", true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            
+            xhr.onload = function () {
+                if (xhr.readyState === xhr.DONE) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.status === 'Success') {
+                            document.getElementById("loginStatus").innerText = "Login successful!";
+                        } else {
+                            document.getElementById("loginStatus").innerText = "Login attempt unsuccessful. Please check password requirements.";
+                        }
+                    } else {
+                        console.error(xhr.statusText);
+                    }
+                }
+            };
+            
+            xhr.onerror = function () {
+                console.error(xhr.statusText);
+            };
+            
+            xhr.send(JSON.stringify({ password: password }));
+        }
+
+        function checkPasswordStrength() {
+            var password = document.getElementById("password").value;
+            var strength = evaluateStrengthLocally(password);
+            document.getElementById("passwordStrength").innerText = "Password Strength: " + strength;
+        }
+
+        function evaluateStrengthLocally(password) {
+            var lengthValid = password.length >= 11;
+            var uppercaseValid = /[A-Z]/.test(password);
+            var lowercaseValid = /[a-z]/.test(password);
+            var specialCharValid = /[!@#$%^&*()]/.test(password);
+
+            var strength = 0;
+            if (lengthValid) strength++;
+            if (uppercaseValid) strength++;
+            if (lowercaseValid) strength++;
+            if (specialCharValid) strength++;
+
+            return strength;
+        }
+    </script>
+</body>
+</html>
